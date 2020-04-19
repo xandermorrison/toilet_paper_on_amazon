@@ -1,31 +1,55 @@
 require 'nokogiri'
 require 'faraday'
+require 'twilio-ruby'
 require_relative 'mylinks'
+require_relative 'config'
 
 user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
 
+account_sid = $ACCOUNT_SID
+auth_token = $AUTH_TOKEN
+
+from = $FROM
+to = $TO
+
+client = Twilio::REST::Client.new(account_sid, auth_token)
+
 loop do
-  #sleep(20)
   found = false
   $links.each do |link|
+    begin
+      f = Faraday.new(link, headers: {'User-Agent' => user_agent}).get
+      html = f.body
 
-    f = Faraday.new(link, headers: {'User-Agent' => user_agent}).get
-    html = f.body
+      parsed_html = Nokogiri::HTML.parse(html)
 
-    parsed_html = Nokogiri::HTML.parse(html)
-
-    availability = ""
-    parsed_html.xpath("//div[@id='availability']/span").each do |tag|
-      availability << tag.content.strip.downcase
+      availability = ""
+      parsed_html.xpath("//div[@id='availability']/span").each do |tag|
+        availability << tag.content.strip.downcase
+      end
+    rescue
+      next
     end
 
-    puts availability
     if availability.include? "in stock"
       found = true
-      puts "HERE"
+
+      message = "TP! #{link}"
+
+      puts message
+      puts message.length
+
+      client.messages.create(
+        from: from,
+        to: to,
+        body: message
+      )
+
       break
-      # send text message
+
     end
   end
   break if found == true
+
+  sleep(20)
 end
