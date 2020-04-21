@@ -17,6 +17,7 @@ client = Twilio::REST::Client.new(account_sid, auth_token)
 loop do
   found = false
   $links.each do |link|
+    puts link
     begin
       f = Faraday.new(link, headers: {'User-Agent' => user_agent}).get
       html = f.body
@@ -37,7 +38,6 @@ loop do
       message = "TP! #{link}"
 
       puts message
-      puts message.length
 
       client.messages.create(
         from: from,
