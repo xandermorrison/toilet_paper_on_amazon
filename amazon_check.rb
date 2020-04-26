@@ -32,12 +32,14 @@ loop do
       next
     end
 
-    if availability.include? "in stock"
+    if availability.include? "in stock" and not availability.include? "unavailable"
       found = true
 
       message = "TP! #{link}"
 
       puts message
+
+      message = "TP!"
 
       client.messages.create(
         from: from,
